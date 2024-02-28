@@ -38,7 +38,7 @@ func main() {
 func simdIntrinsics() {
 	start := time.Now()
 	C.add_arrays((*C.float)(unsafe.Pointer(&a[0])), (*C.float)(unsafe.Pointer(&b[0])), C.int(len(a)))
-	fmt.Printf("SIMD Intrinsics: %v\n", float64(arrLen)/time.Since(start).Seconds()/1000000000)
+	fmt.Printf("SIMD Intrinsics - Bil ops/second: %v\n", float64(arrLen)/time.Since(start).Seconds()/1000000000)
 }
 
 func simdGensimd() {
@@ -48,7 +48,7 @@ func simdGensimd() {
 		a := simd.MulF32x4(simd.F32x4{a[i], a[i+1], a[i+2], a[i+3]}, simd.F32x4{b[i], b[i+1], b[i+2], b[i+3]})
 		sum += a[0] + a[1] + a[2] + a[3]
 	}
-	fmt.Printf("SIMD gensimd: %v\n", float64(arrLen)/time.Since(start).Seconds())
+	fmt.Printf("SIMD gensimd - Bil ops/second: %v\n", float64(arrLen)/time.Since(start).Seconds()/1000000000)
 }
 
 func unrolled() {
@@ -60,7 +60,7 @@ func unrolled() {
 		sum += a[i+2] * b[i+2]
 		sum += a[i+3] * b[i+3]
 	}
-	fmt.Printf("Unrolled: %v\n", float64(arrLen)/time.Since(start).Seconds())
+	fmt.Printf("Unrolled - Bil ops/second: %v\n", float64(arrLen)/time.Since(start).Seconds()/1000000000)
 }
 
 func unrolled_nobouncchecking() {
@@ -75,5 +75,5 @@ func unrolled_nobouncchecking() {
 		s3 := aTmp[3] * bTmp[3]
 		sum += s0 + s1 + s2 + s3
 	}
-	fmt.Printf("Unrolled no bound checking: %v\n", float64(arrLen)/time.Since(start).Seconds())
+	fmt.Printf("Unrolled no bound checking - Bil ops/second: %v\n", float64(arrLen)/time.Since(start).Seconds()/1000000000)
 }
