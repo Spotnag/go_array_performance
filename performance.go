@@ -15,11 +15,13 @@ var x, y []simd.F32x4
 var arrLen = 100000000
 
 func init() {
+	// Create slices to be processed
 	for i := 0; i < arrLen; i++ {
 		a = append(a, float32(i))
 		b = append(b, float32(i))
 	}
 
+	// Convert a and b to F32x4 slices so this conversion is not done in the performance loop
 	for i := 0; i < arrLen; i += 4 {
 		x = append(x, simd.F32x4{a[i], a[i+1], a[i+2], a[i+3]})
 		y = append(y, simd.F32x4{b[i], b[i+1], b[i+2], b[i+3]})
@@ -29,6 +31,8 @@ func init() {
 func main() {
 	simdIntrinsics()
 	simdGensimd()
+	unrolled()
+	unrolled_nobouncchecking()
 }
 
 func simdIntrinsics() {
@@ -45,4 +49,31 @@ func simdGensimd() {
 		sum += a[0] + a[1] + a[2] + a[3]
 	}
 	fmt.Printf("SIMD gensimd: %v\n", float64(arrLen)/time.Since(start).Seconds())
+}
+
+func unrolled() {
+	start := time.Now()
+	sum := float32(0)
+	for i := 0; i < len(a); i += 4 {
+		sum += a[i] * b[i]
+		sum += a[i+1] * b[i+1]
+		sum += a[i+2] * b[i+2]
+		sum += a[i+3] * b[i+3]
+	}
+	fmt.Printf("Unrolled: %v\n", float64(arrLen)/time.Since(start).Seconds())
+}
+
+func unrolled_nobouncchecking() {
+	start := time.Now()
+	sum := float32(0)
+	for i := 0; i < len(a) && i < len(b); i += 4 {
+		aTmp := a[i : i+4 : i+4]
+		bTmp := b[i : i+4 : i+4]
+		s0 := aTmp[0] * bTmp[0]
+		s1 := aTmp[1] * bTmp[1]
+		s2 := aTmp[2] * bTmp[2]
+		s3 := aTmp[3] * bTmp[3]
+		sum += s0 + s1 + s2 + s3
+	}
+	fmt.Printf("Unrolled no bound checking: %v\n", float64(arrLen)/time.Since(start).Seconds())
 }
