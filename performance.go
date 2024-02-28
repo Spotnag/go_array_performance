@@ -31,7 +31,7 @@ func init() {
 
 func main() {
 	unrolled()
-	unrolled_nobouncchecking()
+	unrolled_noboundchecking()
 	simdGensimd()
 	simdIntrinsics()
 }
@@ -39,17 +39,19 @@ func main() {
 func simdIntrinsics() {
 	start := time.Now()
 	C.add_arrays((*C.float)(unsafe.Pointer(&a[0])), (*C.float)(unsafe.Pointer(&b[0])), C.int(len(a)))
-	fmt.Printf("SIMD Intrinsics - Bil ops/second: %v\nSum:%v\n", float64(arrLen)/time.Since(start).Seconds()/1000000000, a[0]+a[1]+a[2]+a[3])
+	end := time.Since(start).Seconds()
+	fmt.Printf("SIMD Intrinsics - Bil ops/second: %v\nSum:%v\n", float64(arrLen)/end/1000000000, a[0]+a[1]+a[2]+a[3])
 }
 
 func simdGensimd() {
 	start := time.Now()
 	sum := float32(0)
-	for i := 0; i < len(a); i += 4 {
-		a := simd.MulF32x4(simd.F32x4{a[i], a[i+1], a[i+2], a[i+3]}, simd.F32x4{b[i], b[i+1], b[i+2], b[i+3]})
-		sum += a[0] + a[1] + a[2] + a[3]
+	for i := 0; i < len(x); i++ {
+		a := simd.MulF32x4(x[i], y[i])
+		sum += a[0]
 	}
-	fmt.Printf("SIMD gensimd - Bil ops/second: %v\nSum:%v\n", float64(arrLen)/time.Since(start).Seconds()/1000000000, sum)
+	end := time.Since(start).Seconds()
+	fmt.Printf("SIMD gensimd - Bil ops/second: %v\nSum:%v\n", float64(arrLen)/end/1000000000, sum)
 }
 
 func unrolled() {
@@ -62,13 +64,22 @@ func unrolled() {
 		s3 := a[i+3] * b[i+3]
 		sum += s0 + s1 + s2 + s3
 	}
-	fmt.Printf("Unrolled - Bil ops/second: %v\nSum:%v\n", float64(arrLen)/time.Since(start).Seconds()/1000000000, sum)
+	end := time.Since(start).Seconds()
+	fmt.Printf("Unrolled - Bil ops/second: %v\nSum:%v\n", float64(arrLen)/end/1000000000, sum)
 }
 
-func unrolled_nobouncchecking() {
+func unrolled_noboundchecking() {
+	if len(a) != len(b) {
+		panic("slices must have equal lengths")
+	}
+
+	if len(a)%4 != 0 {
+		panic("slice length must be multiple of 4")
+	}
+
 	start := time.Now()
 	sum := float32(0)
-	for i := 0; i < len(a) && i < len(b); i += 4 {
+	for i := 0; i < len(a); i += 4 {
 		aTmp := a[i : i+4 : i+4]
 		bTmp := b[i : i+4 : i+4]
 		s0 := aTmp[0] * bTmp[0]
@@ -77,5 +88,6 @@ func unrolled_nobouncchecking() {
 		s3 := aTmp[3] * bTmp[3]
 		sum += s0 + s1 + s2 + s3
 	}
-	fmt.Printf("Unrolled no bound checking - Bil ops/second: %v\nSum:%v\n", float64(arrLen)/time.Since(start).Seconds()/1000000000, sum)
+	end := time.Since(start).Seconds()
+	fmt.Printf("Unrolled no bound checking - Bil ops/second: %v\nSum:%v\n", float64(arrLen)/end/1000000000, sum)
 }
